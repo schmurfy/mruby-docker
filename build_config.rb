@@ -27,6 +27,10 @@ MRuby::Build.new do |conf|
   conf.gem :github => 'mattn/mruby-json'
   conf.gem :github => 'mattn/mruby-pcre-regexp'
   conf.gem :github => 'pbosetti/mruby-merb'
+  
+  # utility gems, not used directly by core  
+  conf.gem :github => 'iij/mruby-env'
+
 
   # include the default GEMs
   conf.gembox 'default'
