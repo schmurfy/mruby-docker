@@ -402,4 +402,8 @@ class Docker::Object::Container
     @labels['io.rancher.stack_service.name']
   end
   
+  def container_name
+    service_name.split('/').last()
+  end
+  
 end
