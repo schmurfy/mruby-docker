@@ -26,7 +26,14 @@ d = Docker::Action::ContainerStarted.new()
 $manager = Mongoose::Manager.new
 $docker_hosts = []
 
-LOCAL_MODE = true
+if File.exist?('/proc/self/cgroup')
+  myid = `head -1 /proc/self/cgroup|cut -d/ -f5`.strip
+  LOCAL_MODE = false
+else
+  myid = ""
+  LOCAL_MODE = true
+end
+
 if LOCAL_MODE
   $docker_hosts << ['rancher1', 'tcp://127.0.0.1:3341']
   $docker_hosts << ['rancher2', 'tcp://127.0.0.1:3342']
@@ -110,7 +117,6 @@ def list_containers()
   end
   
   clients.each do |d|
-    # ret += d.list_containers()
     d.list_containers().each do |c|
       # p [:GET, c.id]
       ret << d.get_container(c.id)
@@ -154,7 +160,6 @@ $read_connection = $manager.bind('udp://127.0.0.1:9999', TimerHandler)
 $write_connection = $manager.connect('udp://127.0.0.1:9999')
 
 
-myid = `head -1 /proc/self/cgroup|cut -d/ -f5`.strip
 puts "Container ID: #{myid}"
 # myid = '3a374e6977677c69bcda2d6e7bd01f456a7e939f211f94d4d0217609a5970908'
 
