@@ -24,6 +24,18 @@ require './mrblib/docker-client'
 d = Docker::Action::ContainerStarted.new()
 
 $manager = Mongoose::Manager.new
+$docker_hosts = []
+
+LOCAL_MODE = true
+if LOCAL_MODE
+  $docker_hosts << ['rancher1', 'tcp://127.0.0.1:3341']
+  $docker_hosts << ['rancher2', 'tcp://127.0.0.1:3342']
+  $consul_address = 'tcp://95.140.12.77:8500'
+else
+  $docker_hosts << ['rancher1', 'tcp://169.254.249.45:3344']
+  $docker_hosts << ['rancher2', 'tcp://169.254.249.57:3344']
+  $consul_address = 'tcp://169.254.249.99:8500'
+end
 
 
 # Fiber.new do
@@ -38,9 +50,8 @@ $manager = Mongoose::Manager.new
   
 # end.resume
 
+$consul = Consul.new($manager, $consul_address)
 
-# $consul = Consul.new($manager, 'tcp://95.140.12.77:8500')
-$consul = Consul.new($manager, 'tcp://169.254.249.99:8500')
 
 #### script API
 
@@ -91,12 +102,6 @@ if ARGV.size != 1
   exit 1
 end
 
-$docker_hosts = [
-  # ['rancher1', 'tcp://127.0.0.1:3341'],
-  ['rancher1', 'tcp://169.254.249.45:3344'],
-  # ['rancher2', 'tcp://127.0.0.1:3342']
-  ['rancher2', 'tcp://169.254.249.57:3344']
-]
 
 def list_containers()
   ret = []
@@ -104,7 +109,14 @@ def list_containers()
     DockerClient.new(arr[0], $manager, arr[1])
   end
   
-  clients.each{|d| ret += d.list_containers() }
+  clients.each do |d|
+    # ret += d.list_containers()
+    d.list_containers().each do |c|
+      # p [:GET, c.id]
+      ret << d.get_container(c.id)
+    end
+  end
+  
   ret
 end
 
@@ -172,13 +184,13 @@ dispatch_events = proc do |event_data|
   # p ev
   if MONITORED_EVENTS.any?{|klass| ev.is_a?(klass) }
     Fiber.new do
-      begin
+      # begin
         # $containers = list_containers()
         $containers_change_block.call(ev)
         $write_connection.send_data('.')
-      rescue => err
-        p [:fuck, err]
-      end
+      # rescue => err
+      #   p [:fuck, err]
+      # end
     end.resume
   end  
 end
