@@ -30,6 +30,8 @@ MRuby::Build.new do |conf|
   
   # utility gems, not used directly by core  
   conf.gem :github => 'iij/mruby-env'
+  conf.gem :github => 'haconiwa/mruby-exec'
+
 
 
   # include the default GEMs
